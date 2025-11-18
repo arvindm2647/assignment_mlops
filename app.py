@@ -6,7 +6,9 @@ import plotly.graph_objects as go
 import plotly.express as px
 import json
 import os
-import subprocess
+import sys
+
+sys.path.append('src')
 
 st.set_page_config(
     page_title="CPU Usage Prediction Dashboard",
@@ -33,12 +35,24 @@ def train_model_if_needed():
         st.info("⚙️ Model not found. Training model... This will take about a minute.")
         
         try:
-            subprocess.run(['python', 'src/preprocess.py'], check=True)
-            subprocess.run(['python', 'src/train.py'], check=True)
-            subprocess.run(['python', 'src/evaluate.py'], check=True)
+            from preprocess import preprocess
+            from train import train
+            from evaluate import evaluate
+            
+            st.write("Step 1/3: Preprocessing data...")
+            preprocess()
+            
+            st.write("Step 2/3: Training model...")
+            train()
+            
+            st.write("Step 3/3: Evaluating model...")
+            evaluate()
+            
             st.success("✅ Model trained successfully!")
         except Exception as e:
             st.error(f"❌ Training failed: {e}")
+            import traceback
+            st.code(traceback.format_exc())
             return None, None, None
     
     try:
