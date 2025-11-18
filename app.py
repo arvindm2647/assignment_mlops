@@ -5,6 +5,8 @@ import pickle
 import plotly.graph_objects as go
 import plotly.express as px
 import json
+import os
+import subprocess
 
 st.set_page_config(
     page_title="CPU Usage Prediction Dashboard",
@@ -23,11 +25,26 @@ st.markdown('<p class="main-header">🖥️ CPU Usage Prediction Dashboard</p>',
 st.markdown("---")
 
 @st.cache_resource
-def load_artifacts():
+def train_model_if_needed():
+    model_path = 'data/model.pkl'
+    scaler_path = 'data/scaler.pkl'
+    
+    if not os.path.exists(model_path) or not os.path.exists(scaler_path):
+        st.info("⚙️ Model not found. Training model... This will take about a minute.")
+        
+        try:
+            subprocess.run(['python', 'src/preprocess.py'], check=True)
+            subprocess.run(['python', 'src/train.py'], check=True)
+            subprocess.run(['python', 'src/evaluate.py'], check=True)
+            st.success("✅ Model trained successfully!")
+        except Exception as e:
+            st.error(f"❌ Training failed: {e}")
+            return None, None, None
+    
     try:
-        with open('data/model.pkl', 'rb') as f:
+        with open(model_path, 'rb') as f:
             model = pickle.load(f)
-        with open('data/scaler.pkl', 'rb') as f:
+        with open(scaler_path, 'rb') as f:
             scaler = pickle.load(f)
         with open('metrics.json', 'r') as f:
             metrics = json.load(f)
@@ -36,7 +53,7 @@ def load_artifacts():
         st.error(f"Error loading artifacts: {e}")
         return None, None, None
 
-model, scaler, metrics = load_artifacts()
+model, scaler, metrics = train_model_if_needed()
 
 st.sidebar.title("📋 Navigation")
 page = st.sidebar.radio("Select Page", ["🏠 Home", "🎯 Prediction", "📊 Model Performance", "📈 Data Analysis"])
