@@ -174,7 +174,7 @@ if page == "🏠 Home":
             height=400
         )
         
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
 elif page == "🎯 Prediction":
     st.header("🎯 Make Real-time Predictions")
@@ -234,7 +234,7 @@ elif page == "🎯 Prediction":
                     options=["DaemonSet", "Job", "ReplicaSet", "ReplicationController", "StatefulSet"]
                 )
             
-            submitted = st.form_submit_button("🔮 Predict CPU Usage", use_container_width=True)
+            submitted = st.form_submit_button("🔮 Predict CPU Usage")
             
             if submitted:
                 try:
@@ -293,7 +293,7 @@ elif page == "🎯 Prediction":
                     ))
                     
                     fig.update_layout(height=400)
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
                     
                 except Exception as e:
                     st.error(f"❌ Prediction failed: {e}")
@@ -324,7 +324,7 @@ elif page == "📊 Model Performance":
             ]
         })
         
-        st.dataframe(metrics_df, use_container_width=True, hide_index=True)
+        st.dataframe(metrics_df, width='stretch', hide_index=True)
         
         st.markdown("---")
         
@@ -339,7 +339,7 @@ elif page == "📊 Model Performance":
                 marker_color=['#FF6B6B', '#4ECDC4', '#45B7D1']
             ))
             fig1.update_layout(title="Training Metrics", height=400)
-            st.plotly_chart(fig1, use_container_width=True)
+            st.plotly_chart(fig1, width='stretch')
         
         with col2:
             st.subheader("🎯 Testing Performance")
@@ -350,7 +350,7 @@ elif page == "📊 Model Performance":
                 marker_color=['#FF6B6B', '#4ECDC4', '#45B7D1']
             ))
             fig2.update_layout(title="Testing Metrics", height=400)
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, width='stretch')
         
         st.markdown("---")
         
@@ -372,7 +372,7 @@ elif page == "📊 Model Performance":
             }
         ))
         fig3.update_layout(height=400)
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(fig3, width='stretch')
 
 elif page == "📈 Data Analysis":
     st.header("📈 Data Analysis & Insights")
@@ -393,19 +393,19 @@ elif page == "📈 Data Analysis":
         st.markdown("---")
         
         st.subheader("🔍 Data Preview")
-        st.dataframe(df.head(10), use_container_width=True)
+        st.dataframe(df.head(10), width='stretch')
         
         st.markdown("---")
         
         st.subheader("📊 Statistical Summary")
-        st.dataframe(df.describe(), use_container_width=True)
+        st.dataframe(df.describe(), width='stretch')
         
         st.markdown("---")
         
         st.subheader("📉 CPU Usage Distribution")
         fig = px.histogram(df, x='cpu_usage', nbins=50, title="Distribution of CPU Usage")
         fig.update_layout(height=400)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
         
     except Exception as e:
         st.error(f"Error loading data: {e}")
