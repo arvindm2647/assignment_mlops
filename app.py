@@ -18,8 +18,13 @@ st.set_page_config(
 )
 
 def load_css():
-    with open("styles.css") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    try:
+        if os.path.exists("styles.css"):
+            with open("styles.css") as f:
+                st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    except Exception as e:
+        # CSS is optional, continue without it
+        pass
 
 load_css()
 
@@ -31,10 +36,18 @@ def train_model_if_needed():
     model_path = 'data/model.pkl'
     scaler_path = 'data/scaler.pkl'
     
+    # Create data directory if it doesn't exist
+    os.makedirs('data', exist_ok=True)
+    
     if not os.path.exists(model_path) or not os.path.exists(scaler_path):
         st.info("⚙️ Model not found. Training model... This will take about a minute.")
         
         try:
+            # Check if cpu_usage.csv exists
+            if not os.path.exists('cpu_usage.csv'):
+                st.error("❌ Error: cpu_usage.csv file not found! Please ensure the data file is in the repository.")
+                return None, None, None
+            
             from preprocess import preprocess
             from train import train
             from evaluate import evaluate
@@ -48,7 +61,7 @@ def train_model_if_needed():
             st.write("Step 3/3: Evaluating model...")
             evaluate()
             
-            st.success("✅ Model trained successfully!")
+            st.success("✅ Model trained successfully! Please refresh the page.")
         except Exception as e:
             st.error(f"❌ Training failed: {e}")
             import traceback
@@ -60,11 +73,15 @@ def train_model_if_needed():
             model = pickle.load(f)
         with open(scaler_path, 'rb') as f:
             scaler = pickle.load(f)
-        with open('metrics.json', 'r') as f:
-            metrics = json.load(f)
+        metrics = {}
+        if os.path.exists('metrics.json'):
+            with open('metrics.json', 'r') as f:
+                metrics = json.load(f)
         return model, scaler, metrics
     except Exception as e:
         st.error(f"Error loading artifacts: {e}")
+        import traceback
+        st.code(traceback.format_exc())
         return None, None, None
 
 model, scaler, metrics = train_model_if_needed()
@@ -118,7 +135,7 @@ if page == "🏠 Home":
     
     st.markdown("---")
     
-    if metrics:
+    if metrics and len(metrics) > 0:
         st.subheader("📊 Model Performance Summary")
         
         col1, col2, col3, col4 = st.columns(4)
@@ -303,7 +320,7 @@ elif page == "🎯 Prediction":
 elif page == "📊 Model Performance":
     st.header("📊 Detailed Model Performance")
     
-    if metrics:
+    if metrics and len(metrics) > 0:
         st.subheader("📋 Performance Metrics Table")
         
         metrics_df = pd.DataFrame({
