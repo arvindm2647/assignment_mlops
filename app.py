@@ -32,59 +32,72 @@ st.markdown('<p class="main-header">🖥️ CPU Usage Prediction Dashboard</p>',
 st.markdown("---")
 
 @st.cache_resource
-def train_model_if_needed():
+def load_model():
+    """Load the trained model, scaler, and metrics if they exist."""
+    model_path = 'data/model.pkl'
+    scaler_path = 'data/scaler.pkl'
+    
+    try:
+        if os.path.exists(model_path) and os.path.exists(scaler_path):
+            with open(model_path, 'rb') as f:
+                model = pickle.load(f)
+            with open(scaler_path, 'rb') as f:
+                scaler = pickle.load(f)
+            metrics = {}
+            if os.path.exists('metrics.json'):
+                with open('metrics.json', 'r') as f:
+                    metrics = json.load(f)
+            return model, scaler, metrics
+    except Exception as e:
+        # Silently fail - model just doesn't exist yet
+        return None, None, None
+    
+    return None, None, None
+
+def train_model():
+    """Train the model if it doesn't exist."""
     model_path = 'data/model.pkl'
     scaler_path = 'data/scaler.pkl'
     
     # Create data directory if it doesn't exist
     os.makedirs('data', exist_ok=True)
     
-    if not os.path.exists(model_path) or not os.path.exists(scaler_path):
-        st.info("⚙️ Model not found. Training model... This will take about a minute.")
-        
-        try:
-            # Check if cpu_usage.csv exists
-            if not os.path.exists('cpu_usage.csv'):
-                st.error("❌ Error: cpu_usage.csv file not found! Please ensure the data file is in the repository.")
-                return None, None, None
-            
-            from preprocess import preprocess
-            from train import train
-            from evaluate import evaluate
-            
-            st.write("Step 1/3: Preprocessing data...")
-            preprocess()
-            
-            st.write("Step 2/3: Training model...")
-            train()
-            
-            st.write("Step 3/3: Evaluating model...")
-            evaluate()
-            
-            st.success("✅ Model trained successfully! Please refresh the page.")
-        except Exception as e:
-            st.error(f"❌ Training failed: {e}")
-            import traceback
-            st.code(traceback.format_exc())
-            return None, None, None
+    if not os.path.exists('cpu_usage.csv'):
+        st.error("❌ Error: cpu_usage.csv file not found! Please ensure the data file is in the repository.")
+        return False
     
     try:
-        with open(model_path, 'rb') as f:
-            model = pickle.load(f)
-        with open(scaler_path, 'rb') as f:
-            scaler = pickle.load(f)
-        metrics = {}
-        if os.path.exists('metrics.json'):
-            with open('metrics.json', 'r') as f:
-                metrics = json.load(f)
-        return model, scaler, metrics
+        from preprocess import preprocess
+        from train import train
+        from evaluate import evaluate
+        
+        with st.spinner("Step 1/3: Preprocessing data..."):
+            preprocess()
+        
+        with st.spinner("Step 2/3: Training model..."):
+            train()
+        
+        with st.spinner("Step 3/3: Evaluating model..."):
+            evaluate()
+        
+        st.success("✅ Model trained successfully!")
+        load_model.clear()  # Clear cache to reload model
+        return True
     except Exception as e:
-        st.error(f"Error loading artifacts: {e}")
+        st.error(f"❌ Training failed: {e}")
         import traceback
         st.code(traceback.format_exc())
-        return None, None, None
+        return False
 
-model, scaler, metrics = train_model_if_needed()
+# Load model (cached)
+model, scaler, metrics = load_model()
+
+# If model doesn't exist, show training option
+if model is None or scaler is None:
+    st.warning("⚠️ Model not found. Click the button below to train the model.")
+    if st.button("🚀 Train Model", type="primary"):
+        if train_model():
+            st.rerun()
 
 st.sidebar.title("📋 Navigation")
 page = st.sidebar.radio("Select Page", ["🏠 Home", "🎯 Prediction", "📊 Model Performance", "📈 Data Analysis"])
